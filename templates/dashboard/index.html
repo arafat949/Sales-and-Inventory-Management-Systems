@@ -1,0 +1,266 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+{% block title %}Dashboard - BSIMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1">Welcome back, {{ request.user.get_full_name|default:request.user.username }}</h4>
+        <p class="text-muted mb-0">Here's what's happening with your business today.</p>
+    </div>
+    <span class="badge bg-primary">{{ request.user.get_role_display }}</span>
+</div>
+
+{% if unread_notifications %}
+<div class="alert alert-warning d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+    <div>
+        <strong><i class="fa-solid fa-bell me-1"></i>You have {{ unread_notifications_count }} unread alert{{ unread_notifications_count|pluralize }}:</strong>
+        <ul class="mb-0 mt-1 ps-3 small">
+            {% for n in unread_notifications %}
+            <li>{{ n.message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <a href="{% url 'notifications:index' %}" class="btn btn-sm btn-outline-dark">View All</a>
+</div>
+{% endif %}
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Total Sales</div>
+                <div class="stat-value">{{ total_sales|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="fa-solid fa-cash-register"></i></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value">{{ currency }}{{ total_revenue|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="fa-solid fa-sack-dollar"></i></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Total Expenses</div>
+                <div class="stat-value">{{ currency }}{{ total_expenses|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#fee2e2;color:#dc2626;"><i class="fa-solid fa-receipt"></i></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Net Profit</div>
+                <div class="stat-value {% if net_profit < 0 %}text-danger{% endif %}">{{ currency }}{{ net_profit|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa-solid fa-chart-line"></i></div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Total Products</div>
+                <div class="stat-value">{{ total_products|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#e0f2fe;color:#0284c7;"><i class="fa-solid fa-box"></i></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Total Customers</div>
+                <div class="stat-value">{{ total_customers|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#fef3c7;color:#b45309;"><i class="fa-solid fa-users"></i></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Total Suppliers</div>
+                <div class="stat-value">{{ total_suppliers|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#f1f5f9;color:#334155;"><i class="fa-solid fa-truck-field"></i></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card d-flex justify-content-between align-items-start">
+            <div>
+                <div class="stat-label">Low Stock Products</div>
+                <div class="stat-value {% if low_stock_count > 0 %}text-danger{% endif %}">{{ low_stock_count|intcomma }}</div>
+            </div>
+            <div class="stat-icon" style="background:#fee2e2;color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Chart -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h6 class="mb-0">Sales &amp; Revenue Trend</h6>
+            <div class="btn-group btn-group-sm" role="group" id="chart-range-group">
+                <button type="button" class="btn btn-outline-primary" data-range="7d">7 Days</button>
+                <button type="button" class="btn btn-outline-primary active" data-range="30d">30 Days</button>
+                <button type="button" class="btn btn-outline-primary" data-range="6m">6 Months</button>
+                <button type="button" class="btn btn-outline-primary" data-range="12m">12 Months</button>
+            </div>
+        </div>
+        <canvas id="salesChart" height="90"></canvas>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Top Selling Products -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Top Selling Products</h6>
+                {% if top_products %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>Product</th><th class="text-end">Qty Sold</th><th class="text-end">Revenue</th></tr></thead>
+                        <tbody>
+                        {% for p in top_products %}
+                            <tr>
+                                <td>{{ p.product__name }}</td>
+                                <td class="text-end">{{ p.qty_sold }}</td>
+                                <td class="text-end">{{ currency }}{{ p.revenue|floatformat:2|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-4">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <p class="mb-0">No sales recorded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Products -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Low Stock Products</h6>
+                {% if low_stock_products %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>Product</th><th class="text-end">Current</th><th class="text-end">Minimum</th><th>Status</th></tr></thead>
+                        <tbody>
+                        {% for prod in low_stock_products %}
+                            <tr>
+                                <td>{{ prod.name }}</td>
+                                <td class="text-end">{{ prod.current_stock }}</td>
+                                <td class="text-end">{{ prod.minimum_stock }}</td>
+                                <td>
+                                    {% if prod.current_stock == 0 %}
+                                        <span class="badge badge-status-out-of-stock">Out of Stock</span>
+                                    {% else %}
+                                        <span class="badge badge-status-low-stock">Low Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-4">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <p class="mb-0">All products are sufficiently stocked.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card">
+    <div class="card-body">
+        <h6 class="mb-3">Recent Transactions</h6>
+        {% if recent_transactions %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Type</th><th>Reference</th><th>Detail</th><th class="text-end">Amount</th><th class="text-end">Date</th></tr></thead>
+                <tbody>
+                {% for t in recent_transactions %}
+                    <tr>
+                        <td><span class="badge bg-{{ t.color }}-subtle text-{{ t.color }}"><i class="fa-solid {{ t.icon }} me-1"></i>{{ t.type }}</span></td>
+                        <td>{{ t.reference }}</td>
+                        <td>{{ t.detail }}</td>
+                        <td class="text-end">{{ currency }}{{ t.amount|floatformat:2|intcomma }}</td>
+                        <td class="text-end text-muted">{{ t.date }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <p class="mb-0">No transactions recorded yet. Sales, purchases and expenses will show up here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{{ chart_data|json_script:"chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+    const ctx = document.getElementById('salesChart').getContext('2d');
+
+    let currentRange = '30d';
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData[currentRange].labels,
+            datasets: [{
+                label: 'Revenue',
+                data: chartData[currentRange].values,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: (v) => '{{ currency }}' + v } }
+            }
+        }
+    });
+
+    document.querySelectorAll('#chart-range-group button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('#chart-range-group button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const range = btn.getAttribute('data-range');
+            chart.data.labels = chartData[range].labels;
+            chart.data.datasets[0].data = chartData[range].values;
+            chart.update();
+        });
+    });
+});
+</script>
+{% endblock %}

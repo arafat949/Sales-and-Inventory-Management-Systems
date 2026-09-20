@@ -1,0 +1,33 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+{% block title %}Product Sales Report - BSIMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Product Sales Report</h4>
+    <a href="{% url 'reports:index' %}" class="btn btn-outline-secondary btn-sm">Back to Reports</a>
+</div>
+{% include 'reports/_date_filter.html' %}
+
+<div class="card">
+    <div class="card-body">
+        <h6 class="mb-3">{{ date_from }} to {{ date_to }} — Total Revenue: {{ total_revenue|floatformat:2|intcomma }}</h6>
+        <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Product</th><th>SKU</th><th class="text-end">Qty Sold</th><th class="text-end">Revenue</th></tr></thead>
+            <tbody>
+            {% for i in items %}
+                <tr>
+                    <td>{{ i.product__name }}</td>
+                    <td class="text-muted">{{ i.product__sku }}</td>
+                    <td class="text-end">{{ i.qty_sold }}</td>
+                    <td class="text-end">{{ i.revenue|floatformat:2|intcomma }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-box"></i><p class="mb-0">No product sales in this period.</p></div></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

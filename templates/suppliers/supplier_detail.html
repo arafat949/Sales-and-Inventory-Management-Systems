@@ -1,0 +1,60 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+{% block title %}{{ supplier.company_name }} - BSIMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1">{{ supplier.company_name }}</h4>
+        <span class="text-muted">{{ supplier.contact_person|default:"—" }} · {{ supplier.phone }}</span>
+    </div>
+    <div>
+        <a href="{% url 'suppliers:edit' supplier.pk %}" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-pen me-1"></i>Edit</a>
+        <a href="{% url 'suppliers:list' %}" class="btn btn-link btn-sm">Back to Suppliers</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Supplied Products</h6>
+                {% if supplied_products %}
+                <ul class="list-group list-group-flush">
+                    {% for p in supplied_products %}
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span>{{ p.name }}</span>
+                        <span class="text-muted">{{ p.current_stock }} {{ p.unit }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state py-3"><i class="fa-solid fa-box"></i><p class="mb-0">No products linked yet.</p></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Purchase History</h6>
+                {% if purchase_history %}
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Ref</th><th>Date</th><th class="text-end">Amount</th></tr></thead>
+                    <tbody>
+                    {% for pur in purchase_history %}
+                        <tr>
+                            <td>PUR-{{ pur.id|stringformat:"05d" }}</td>
+                            <td>{{ pur.purchase_date|date:"M d, Y" }}</td>
+                            <td class="text-end">{{ pur.total_amount|floatformat:2|intcomma }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state py-3"><i class="fa-solid fa-cart-arrow-down"></i><p class="mb-0">No purchases yet.</p></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

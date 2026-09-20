@@ -1,0 +1,58 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+{% block title %}{{ customer.name }} - BSIMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1">{{ customer.name }}</h4>
+        <span class="text-muted">{{ customer.phone }} {% if customer.email %}· {{ customer.email }}{% endif %}</span>
+    </div>
+    <div>
+        {% if request.user.is_admin or request.user.is_manager %}
+        <a href="{% url 'customers:edit' customer.pk %}" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-pen me-1"></i>Edit</a>
+        {% endif %}
+        <a href="{% url 'customers:list' %}" class="btn btn-link btn-sm">Back to Customers</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value">{{ customer.total_orders }}</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value">{{ customer.total_spent|floatformat:0|intcomma }}</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-label">Last Purchase</div><div class="stat-value" style="font-size:1.1rem;">{{ customer.last_purchase_date|date:"M d, Y"|default:"—" }}</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-label">Customer Type</div><div class="stat-value" style="font-size:1.1rem;">{{ customer.get_customer_type_display }}</div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h6 class="mb-3">Purchase History</h6>
+        {% if purchase_history %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Invoice</th><th>Date</th><th>Payment</th><th>Status</th><th class="text-end">Total</th></tr></thead>
+                <tbody>
+                {% for sale in purchase_history %}
+                    <tr>
+                        <td>INV-{{ sale.id|stringformat:"05d" }}</td>
+                        <td>{{ sale.sale_date|date:"M d, Y" }}</td>
+                        <td>{{ sale.get_payment_method_display }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ sale.get_status_display }}</span></td>
+                        <td class="text-end">{{ sale.total|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4"><i class="fa-solid fa-receipt"></i><p class="mb-0">No purchases yet.</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

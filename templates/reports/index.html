@@ -1,0 +1,62 @@
+{% extends 'base_app.html' %}
+{% block title %}Reports - BSIMS{% endblock %}
+{% block content %}
+<h4 class="mb-4">Reports &amp; Analytics</h4>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <a href="{% url 'reports:sales' %}" class="text-decoration-none text-reset">
+            <div class="card h-100"><div class="card-body">
+                <i class="fa-solid fa-chart-column fa-2x text-primary mb-2"></i>
+                <h6>Sales Report</h6>
+                <p class="text-muted small mb-0">Daily, weekly, monthly, or custom-range sales and revenue.</p>
+            </div></div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'reports:products' %}" class="text-decoration-none text-reset">
+            <div class="card h-100"><div class="card-body">
+                <i class="fa-solid fa-box fa-2x text-success mb-2"></i>
+                <h6>Product Sales Report</h6>
+                <p class="text-muted small mb-0">Quantity sold and revenue per product.</p>
+            </div></div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'reports:customers' %}" class="text-decoration-none text-reset">
+            <div class="card h-100"><div class="card-body">
+                <i class="fa-solid fa-users fa-2x text-warning mb-2"></i>
+                <h6>Customer Report</h6>
+                <p class="text-muted small mb-0">Orders and total spend per customer.</p>
+            </div></div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'reports:inventory' %}" class="text-decoration-none text-reset">
+            <div class="card h-100"><div class="card-body">
+                <i class="fa-solid fa-warehouse fa-2x text-info mb-2"></i>
+                <h6>Inventory Report</h6>
+                <p class="text-muted small mb-0">Current stock levels and stock-value snapshot.</p>
+            </div></div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'reports:expenses' %}" class="text-decoration-none text-reset">
+            <div class="card h-100"><div class="card-body">
+                <i class="fa-solid fa-receipt fa-2x text-danger mb-2"></i>
+                <h6>Expense Report</h6>
+                <p class="text-muted small mb-0">Category-wise expenses over a date range.</p>
+            </div></div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'reports:profit' %}" class="text-decoration-none text-reset">
+            <div class="card h-100"><div class="card-body">
+                <i class="fa-solid fa-scale-balanced fa-2x text-purple mb-2" style="color:#7c3aed;"></i>
+                <h6>Profit Report</h6>
+                <p class="text-muted small mb-0">Revenue minus expenses, month by month.</p>
+            </div></div>
+        </a>
+    </div>
+</div>
+{% endblock %}

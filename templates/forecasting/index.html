@@ -1,0 +1,142 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+{% block title %}AI Sales Forecast - BSIMS{% endblock %}
+{% block content %}
+<h4 class="mb-1">AI Sales Forecast</h4>
+<p class="text-muted mb-4">Estimated future revenue based on your historical sales data.</p>
+
+{% if insufficient_data %}
+<div class="alert alert-warning">
+    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+    Not enough historical sales data yet to generate a reliable forecast. At least 3 months of
+    completed sales are needed. Record more sales, or run the demo data seeder, then check back here.
+</div>
+{% else %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Estimated Sales Forecast — {{ next_forecast.month|date:"F Y" }}</div>
+            <div class="stat-value">{{ next_forecast.revenue|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Model Used</div>
+            <div class="stat-value" style="font-size:1.1rem;">{{ model_used }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Trained On</div>
+            <div class="stat-value" style="font-size:1.1rem;">{{ months_used }} months of data</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h6 class="mb-3">Historical Sales vs. Forecast</h6>
+        <canvas id="forecastChart" height="90"></canvas>
+        <p class="text-muted small mt-3 mb-0">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            The solid blue line is actual historical monthly revenue. The dashed orange line is the
+            model's projected revenue for upcoming months.
+        </p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Forecasted Periods</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Month</th><th class="text-end">Estimated Revenue</th></tr></thead>
+                        <tbody>
+                        {% for f in forecast_list %}
+                            <tr><td>{{ f.month|date:"F Y" }}</td><td class="text-end">{{ f.revenue|floatformat:0|intcomma }}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">How This Works</h6>
+                <p class="small text-muted mb-2">
+                    Based on historical sales data, the model estimates approximately
+                    <strong>{{ next_forecast.revenue|floatformat:0|intcomma }}</strong> in revenue for
+                    <strong>{{ next_forecast.month|date:"F Y" }}</strong>.
+                </p>
+                <ol class="small text-muted ps-3 mb-3">
+                    <li>Completed sales are aggregated into total revenue per month.</li>
+                    <li>A {{ model_used }} model is trained on this monthly trend.</li>
+                    <li>The model extrapolates the trend ({{ trend_direction }}) to predict future months.</li>
+                </ol>
+                <p class="small text-muted mb-0">Model fit (R² score): <strong>{{ r2_score }}</strong> — closer to 1.0 means the trend line fits the historical data more closely.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-secondary mt-4 small">
+    <i class="fa-solid fa-circle-info me-1"></i>
+    Forecasts are estimates and may vary from actual results.
+</div>
+
+{{ chart_labels|json_script:"chart-labels" }}
+{{ historical_series|json_script:"historical-series" }}
+{{ forecast_series|json_script:"forecast-series" }}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if not insufficient_data %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const labels = JSON.parse(document.getElementById('chart-labels').textContent);
+    const historical = JSON.parse(document.getElementById('historical-series').textContent);
+    const forecastData = JSON.parse(document.getElementById('forecast-series').textContent);
+
+    new Chart(document.getElementById('forecastChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Historical Revenue',
+                    data: historical,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: false,
+                },
+                {
+                    label: 'Estimated Forecast',
+                    data: forecastData,
+                    borderColor: '#d97706',
+                    borderDash: [6, 4],
+                    backgroundColor: 'rgba(217, 119, 6, 0.06)',
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: true, position: 'bottom' } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

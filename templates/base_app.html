@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BSIMS{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% with url_name=request.resolver_match.url_name app_name=request.resolver_match.app_name %}
+<div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="app-sidebar">
+        <a href="{% url 'dashboard:index' %}" class="brand">
+            <i class="fa-solid fa-shop"></i>
+            <span>BSIMS
+                <small>Business Sales &amp; Inventory</small>
+            </span>
+        </a>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'dashboard:index' %}" class="nav-link {% if app_name == 'dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-gauge"></i> Dashboard
+            </a>
+
+            <div class="nav-section-label">Catalog</div>
+            <a href="{% url 'products:list' %}" class="nav-link {% if app_name == 'products' and url_name == 'list' %}active{% endif %}">
+                <i class="fa-solid fa-box"></i> Products
+            </a>
+            {% if request.user.is_admin or request.user.is_manager %}
+            <a href="{% url 'products:categories' %}" class="nav-link {% if app_name == 'products' and url_name == 'categories' %}active{% endif %}">
+                <i class="fa-solid fa-tags"></i> Categories
+            </a>
+            {% endif %}
+            <a href="{% url 'customers:list' %}" class="nav-link {% if app_name == 'customers' %}active{% endif %}">
+                <i class="fa-solid fa-users"></i> Customers
+            </a>
+            {% if request.user.is_admin or request.user.is_manager %}
+            <a href="{% url 'suppliers:list' %}" class="nav-link {% if app_name == 'suppliers' %}active{% endif %}">
+                <i class="fa-solid fa-truck-field"></i> Suppliers
+            </a>
+            {% endif %}
+
+            <div class="nav-section-label">Transactions</div>
+            {% if request.user.is_admin or request.user.is_manager %}
+            <a href="{% url 'purchases:list' %}" class="nav-link {% if app_name == 'purchases' %}active{% endif %}">
+                <i class="fa-solid fa-cart-arrow-down"></i> Purchases
+            </a>
+            {% endif %}
+            <a href="{% url 'sales:list' %}" class="nav-link {% if app_name == 'sales' %}active{% endif %}">
+                <i class="fa-solid fa-cash-register"></i> Sales
+            </a>
+            <a href="{% url 'inventory:index' %}" class="nav-link {% if app_name == 'inventory' %}active{% endif %}">
+                <i class="fa-solid fa-warehouse"></i> Inventory
+            </a>
+            {% if request.user.is_admin or request.user.is_manager %}
+            <a href="{% url 'expenses:index' %}" class="nav-link {% if app_name == 'expenses' %}active{% endif %}">
+                <i class="fa-solid fa-receipt"></i> Expenses
+            </a>
+            {% endif %}
+
+            <div class="nav-section-label">Insights</div>
+            {% if request.user.is_admin or request.user.is_manager %}
+            <a href="{% url 'reports:index' %}" class="nav-link {% if app_name == 'reports' %}active{% endif %}">
+                <i class="fa-solid fa-chart-column"></i> Reports
+            </a>
+            {% endif %}
+            {% if request.user.is_admin %}
+            <a href="{% url 'forecasting:index' %}" class="nav-link {% if app_name == 'forecasting' %}active{% endif %}">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Forecast
+            </a>
+            {% endif %}
+            <a href="{% url 'notifications:index' %}" class="nav-link {% if app_name == 'notifications' %}active{% endif %}">
+                <i class="fa-solid fa-bell"></i> Notifications
+                {% if unread_notifications_count %}
+                <span class="badge bg-danger rounded-pill ms-auto">{{ unread_notifications_count }}</span>
+                {% endif %}
+            </a>
+
+            {% if request.user.is_admin %}
+            <div class="nav-section-label">Administration</div>
+            <a href="{% url 'accounts:user_list' %}" class="nav-link {% if app_name == 'accounts' and url_name == 'user_list' %}active{% endif %}">
+                <i class="fa-solid fa-user-shield"></i> Users
+            </a>
+            {% endif %}
+
+            <div class="nav-section-label">Account</div>
+            <a href="{% url 'accounts:profile' %}" class="nav-link {% if app_name == 'accounts' and url_name == 'profile' %}active{% endif %}">
+                <i class="fa-solid fa-id-badge"></i> Profile
+            </a>
+            <a href="{% url 'accounts:logout' %}" class="nav-link">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            &copy; {% now "Y" %} BSIMS
+        </div>
+    </aside>
+
+    <div class="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <div class="app-main">
+        <header class="app-topbar">
+            <button class="sidebar-toggle-btn" data-sidebar-toggle type="button" aria-label="Toggle navigation">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="flex-grow-1"></div>
+
+            <div class="dropdown me-1">
+                <button class="btn btn-light btn-sm position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-regular fa-bell"></i>
+                    {% if unread_notifications_count %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;">
+                        {{ unread_notifications_count }}
+                    </span>
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end p-2" style="width:320px;">
+                    <li class="px-2 pb-2 fw-semibold small text-muted">Notifications</li>
+                    {% for n in unread_notifications %}
+                    <li>
+                        <a class="dropdown-item small text-wrap border-bottom py-2" href="{% url 'notifications:mark_read' n.pk %}">
+                            {% if n.notification_type == 'OUT_OF_STOCK' %}<span class="badge bg-danger me-1">Out of Stock</span>
+                            {% elif n.notification_type == 'LOW_STOCK' %}<span class="badge bg-warning text-dark me-1">Low Stock</span>
+                            {% elif n.notification_type == 'HIGH_EXPENSE' %}<span class="badge bg-info text-dark me-1">High Expense</span>
+                            {% endif %}
+                            {{ n.message }}
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li><span class="dropdown-item-text small text-muted">You're all caught up.</span></li>
+                    {% endfor %}
+                    <li><a class="dropdown-item text-center small text-primary pt-2" href="{% url 'notifications:index' %}">View all notifications</a></li>
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:0.8rem;">
+                        {{ request.user.username|slice:":1"|upper }}
+                    </span>
+                    <span class="d-none d-sm-inline">
+                        {{ request.user.get_full_name|default:request.user.username }}
+                        <small class="text-muted d-block" style="font-size:0.7rem; line-height:1;">{{ request.user.get_role_display }}</small>
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fa-solid fa-id-badge me-2"></i>My Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="fa-solid fa-key me-2"></i>Change Password</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </header>
+
+        <main class="app-content">
+            {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endwith %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

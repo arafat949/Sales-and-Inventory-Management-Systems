@@ -1,0 +1,40 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+{% block title %}Inventory Report - BSIMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Inventory Report</h4>
+    <a href="{% url 'reports:index' %}" class="btn btn-outline-secondary btn-sm">Back to Reports</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4"><div class="stat-card"><div class="stat-label">Total Stock Value (at cost)</div><div class="stat-value">{{ total_stock_value|floatformat:2|intcomma }}</div></div></div>
+    <div class="col-md-4"><div class="stat-card"><div class="stat-label">Low Stock Products</div><div class="stat-value text-danger">{{ low_stock_count }}</div></div></div>
+    <div class="col-md-4"><div class="stat-card"><div class="stat-label">Out of Stock Products</div><div class="stat-value text-danger">{{ out_of_stock_count }}</div></div></div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Product</th><th>Category</th><th class="text-end">Current Stock</th><th class="text-end">Minimum</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for p in products %}
+                <tr>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.category.name }}</td>
+                    <td class="text-end">{{ p.current_stock }} {{ p.unit }}</td>
+                    <td class="text-end">{{ p.minimum_stock }}</td>
+                    <td>
+                        {% if p.stock_status == 'OUT_OF_STOCK' %}<span class="badge badge-status-out-of-stock">Out of Stock</span>
+                        {% elif p.stock_status == 'LOW_STOCK' %}<span class="badge badge-status-low-stock">Low Stock</span>
+                        {% else %}<span class="badge badge-status-in-stock">In Stock</span>{% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-warehouse"></i><p class="mb-0">No products found.</p></div></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

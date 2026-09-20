@@ -1,0 +1,110 @@
+{% extends 'base_app.html' %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Purchase - BSIMS{% endblock %}
+{% block content %}
+<h4 class="mb-3">{% if object %}Edit Purchase{% else %}New Purchase{% endif %}</h4>
+
+<form method="post" id="purchase-form">
+    {% csrf_token %}
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                {% for field in form %}
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Purchase Items</h6>
+                <button type="button" id="add-item-row" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Add Item</button>
+            </div>
+
+            {{ formset.management_form }}
+            {% if formset.non_form_errors %}
+            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" id="items-table">
+                    <thead><tr><th style="width:40%">Product</th><th>Quantity</th><th>Unit Cost</th><th class="text-end">Subtotal</th><th></th></tr></thead>
+                    <tbody id="items-body">
+                    {% for item_form in formset %}
+                        <tr class="item-row">
+                            <td>{{ item_form.id }}{{ item_form.product }}
+                                {% if item_form.product.errors %}<div class="text-danger small">{{ item_form.product.errors }}</div>{% endif %}
+                            </td>
+                            <td>{{ item_form.quantity }}</td>
+                            <td>{{ item_form.unit_cost }}</td>
+                            <td class="text-end row-subtotal">0.00</td>
+                            <td class="text-center">
+                                {% if item_form.DELETE %}
+                                <div class="form-check">{{ item_form.DELETE }}<label class="form-check-label small">Remove</label></div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary">Save Purchase (Pending)</button>
+    <a href="{% url 'purchases:list' %}" class="btn btn-link">Cancel</a>
+</form>
+
+<!-- Hidden empty-form template for JS cloning -->
+<table class="d-none"><tbody>
+<tr id="empty-form-row">
+    <td>{{ formset.empty_form.product }}</td>
+    <td>{{ formset.empty_form.quantity }}</td>
+    <td>{{ formset.empty_form.unit_cost }}</td>
+    <td class="text-end row-subtotal">0.00</td>
+    <td class="text-center">{{ formset.empty_form.DELETE }}</td>
+</tr>
+</tbody></table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const totalFormsInput = document.querySelector('#id_items-TOTAL_FORMS');
+    const itemsBody = document.getElementById('items-body');
+    const emptyRow = document.getElementById('empty-form-row');
+
+    function recalcRow(row) {
+        const qty = parseFloat(row.querySelector('input[name$="-quantity"]')?.value) || 0;
+        const cost = parseFloat(row.querySelector('input[name$="-unit_cost"]')?.value) || 0;
+        const subtotalCell = row.querySelector('.row-subtotal');
+        if (subtotalCell) subtotalCell.textContent = (qty * cost).toFixed(2);
+    }
+
+    function bindRow(row) {
+        row.querySelectorAll('input[name$="-quantity"], input[name$="-unit_cost"]').forEach(function (input) {
+            input.addEventListener('input', function () { recalcRow(row); });
+        });
+        recalcRow(row);
+    }
+
+    itemsBody.querySelectorAll('.item-row').forEach(bindRow);
+
+    document.getElementById('add-item-row').addEventListener('click', function () {
+        const formIndex = parseInt(totalFormsInput.value, 10);
+        const tr = document.createElement('tr');
+        tr.className = 'item-row';
+        tr.innerHTML = emptyRow.innerHTML.replace(/__prefix__/g, formIndex);
+        itemsBody.appendChild(tr);
+        totalFormsInput.value = formIndex + 1;
+        bindRow(tr);
+    });
+});
+</script>
+{% endblock %}

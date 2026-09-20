@@ -1,0 +1,67 @@
+{% extends 'base_app.html' %}
+{% block title %}Customers - BSIMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h4 class="mb-0">Customers</h4>
+    <a href="{% url 'customers:add' %}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Add Customer</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-5">
+        <input type="text" name="q" value="{{ current_q }}" class="form-control" placeholder="Search name or phone...">
+    </div>
+    <div class="col-sm-3">
+        <select name="type" class="form-select" onchange="this.form.submit()">
+            <option value="">All Types</option>
+            <option value="REGULAR" {% if current_type == 'REGULAR' %}selected{% endif %}>Regular</option>
+            <option value="VIP" {% if current_type == 'VIP' %}selected{% endif %}>VIP</option>
+            <option value="NEW" {% if current_type == 'NEW' %}selected{% endif %}>New</option>
+        </select>
+    </div>
+    <div class="col-sm-2">
+        <button class="btn btn-outline-secondary w-100" type="submit"><i class="fa-solid fa-search"></i> Filter</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Type</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for c in customers %}
+                <tr>
+                    <td><a href="{% url 'customers:detail' c.pk %}" class="text-decoration-none fw-medium">{{ c.name }}</a></td>
+                    <td>{{ c.phone }}</td>
+                    <td class="text-muted">{{ c.email|default:"—" }}</td>
+                    <td>
+                        {% if c.customer_type == 'VIP' %}<span class="badge bg-warning text-dark">VIP</span>
+                        {% elif c.customer_type == 'NEW' %}<span class="badge bg-info text-dark">New</span>
+                        {% else %}<span class="badge bg-secondary">Regular</span>{% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'customers:detail' c.pk %}" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-eye"></i></a>
+                        {% if request.user.is_admin or request.user.is_manager %}
+                        <a href="{% url 'customers:edit' c.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                        <a href="{% url 'customers:delete' c.pk %}" class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Delete customer \'{{ c.name }}\'?');"><i class="fa-solid fa-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-users"></i><p class="mb-0">No customers yet.</p></div></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-3">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ current_q }}&type={{ current_type }}">Previous</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ current_q }}&type={{ current_type }}">Next</a></li>{% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

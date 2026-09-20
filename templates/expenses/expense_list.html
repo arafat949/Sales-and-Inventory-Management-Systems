@@ -1,0 +1,73 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+{% block title %}Expenses - BSIMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h4 class="mb-0">Expenses</h4>
+    <a href="{% url 'expenses:add' %}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Add Expense</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-3">
+        <input type="text" name="q" value="{{ current_q }}" class="form-control" placeholder="Search title...">
+    </div>
+    <div class="col-sm-3">
+        <select name="category" class="form-select" onchange="this.form.submit()">
+            <option value="">All Categories</option>
+            {% for value, label in categories %}
+            <option value="{{ value }}" {% if current_category == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-sm-2">
+        <input type="date" name="date_from" value="{{ current_date_from }}" class="form-control" title="From date">
+    </div>
+    <div class="col-sm-2">
+        <input type="date" name="date_to" value="{{ current_date_to }}" class="form-control" title="To date">
+    </div>
+    <div class="col-sm-2">
+        <button class="btn btn-outline-secondary w-100" type="submit"><i class="fa-solid fa-search"></i> Filter</button>
+    </div>
+</form>
+
+<div class="alert alert-light border d-flex justify-content-between align-items-center">
+    <span class="text-muted">Showing {{ expenses|length }} of {{ paginator.count }} expense(s)</span>
+    <span class="fw-bold">Total: {{ total_amount|floatformat:2|intcomma }}</span>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Title</th><th>Category</th><th class="text-end">Amount</th><th>Date</th><th>Recorded By</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for e in expenses %}
+                <tr>
+                    <td class="fw-medium">{{ e.title }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ e.get_category_display }}</span></td>
+                    <td class="text-end">{{ e.amount|floatformat:2|intcomma }}</td>
+                    <td>{{ e.expense_date|date:"M d, Y" }}</td>
+                    <td class="text-muted">{{ e.created_by.username|default:"—" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'expenses:edit' e.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                        <a href="{% url 'expenses:delete' e.pk %}" class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Delete expense \'{{ e.title }}\'?');"><i class="fa-solid fa-trash"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-receipt"></i><p class="mb-0">No expenses recorded yet.</p></div></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-3">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ current_q }}&category={{ current_category }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}">Previous</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ current_q }}&category={{ current_category }}&date_from={{ current_date_from }}&date_to={{ current_date_to }}">Next</a></li>{% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
